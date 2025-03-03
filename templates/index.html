@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Note Generator</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            padding: 20px;
+            background: #0a0a0a; /* Dark background */
+            color: #f0f0f0; /* Light text color */
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 1500px;
+            width: 100%;
+            margin: 0 auto;
+            background: #1a1a1a; /* Dark container background */
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333; /* Subtle border */
+        }
+        h1 {
+            text-align: center;
+            color: #4a90e2; /* Blue accent color */
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+            color: #4a90e2; /* Blue accent color */
+        }
+        input, textarea, select {
+            width: 95%;
+            padding: 12px;
+            margin: 8px 0 20px 0;
+            border: 1px solid #444; /* Darker border */
+            border-radius: 8px;
+            font-size: 14px;
+            background: #2a2a2a; /* Dark input background */
+            color: #f0f0f0; /* Light text color */
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #4a90e2; /* Blue accent color */
+            box-shadow: 0 0 8px rgba(74, 144, 226, 0.5); /* Subtle glow */
+            outline: none;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: #4a90e2; /* Blue accent color */
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .btn:hover {
+            background-color: #357abd; /* Darker blue on hover */
+            transform: translateY(-2px); /* Slight lift */
+        }
+        .btn:active {
+            transform: translateY(0); /* Reset lift on click */
+        }
+        .note-output {
+            margin-top: 30px;
+            border-top: 2px solid #4a90e2; /* Blue accent color */
+            padding-top: 20px;
+        }
+        h2 {
+            color: #4a90e2; /* Blue accent color */
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        #generatedNote {
+            background: #2a2a2a; /* Dark background for note */
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #444; /* Subtle border */
+            color: #f0f0f0; /* Light text color */
+            line-height: 1.6;
+        }
+        #transcript {
+            background: #2a2a2a; /* Dark background for transcript */
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444; /* Subtle border */
+            color: #f0f0f0; /* Light text color */
+            margin-top: 10px;
+        }
+        ::placeholder {
+            color: #888; /* Light gray placeholder text */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Clinical Note Generator</h1>
+        <form id="noteForm">
+            <label for="patientName">Patient Name</label>
+            <input type="text" id="patientName" required>
+            
+            <label for="age">Age</label>
+            <input type="number" id="age" required>
+            
+            <label for="gender">Gender</label>
+            <select id="gender">
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="other">Others</option>
+            </select>
+            
+            <label for="medicalHistory">Medical History</label>
+            <textarea id="medicalHistory" rows="4" required></textarea>
+            
+            <label for="currentSymptoms">Current Symptoms</label>
+            <textarea id="currentSymptoms" rows="4" required></textarea>
+            
+            <label for="observations">Doctor's Observations</label>
+            <textarea id="observations" rows="4" required></textarea>
+            
+            <label for="audioUpload">Upload Audio</label>
+            <input type="file" id="audioUpload" accept="audio/*">
+
+            <button type="button" class="btn" onclick="uploadAudio()">Generate Text</button>
+
+            <h3>Transcript:</h3>
+            <p id="transcript"></p>
+
+            <button type="submit" class="btn">Generate Clinical Note</button>
+        </form>
+
+        <div class="note-output" id="noteOutput">
+            <h2>Patient Summary</h2>
+            <p id="generatedNote"></p>
+        </div>
+    </div>
+
+    <script>
+        function uploadAudio() {
+            const fileInput = document.getElementById('audioUpload');
+            if (!fileInput.files.length) {
+                alert("Please select an audio file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audioFile', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('transcript').textContent = data.transcript || "No text recognized.";
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        document.getElementById('noteForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const patientName = document.getElementById('patientName').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const medicalHistory = document.getElementById('medicalHistory').value;
+            const currentSymptoms = document.getElementById('currentSymptoms').value;
+            const observations = document.getElementById('observations').value;
+
+            const clinicalNote = `
+                <strong>Patient Name:</strong> ${patientName}<br>
+                <strong>Age:</strong> ${age}<br>
+                <strong>Gender:</strong> ${gender}<br><br>
+                <strong>Medical History:</strong><br>${medicalHistory}<br><br>
+                <strong>Current Symptoms:</strong><br>${currentSymptoms}<br><br>
+                <strong>Doctor's Observations:</strong><br>${observations}
+            `;
+
+            document.getElementById('generatedNote').innerHTML = clinicalNote;
+        });
+    </script>
+</body>
+</html>
